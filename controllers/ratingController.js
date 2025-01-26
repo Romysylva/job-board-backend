@@ -1,113 +1,97 @@
 const Rating = require("../models/RatingModels");
+const Job = require("../models/JobModels");
+const Company = require("../models/CompanyModels");
 
-// @desc    Add or update a rating for a job or company
-// @route   POST /api/ratings
-// exports.addOrUpdateRating = async (req, res) => {
-//   const { targetType, targetId, rating } = req.body;
+exports.createRating = async (req, res) => {
+  const { user, targetId, rating, targetType } = req.body;
 
-//   try {
-//     const existingRating = await Rating.findOne({
-//       targetType,
-//       targetId,
-//       user: req.user.id,
-//     });
-//     if (existingRating) {
-//       existingRating.rating = rating;
-//       await existingRating.save();
-//       return res.status(200).json({ success: true, data: existingRating });
-//     }
-
-//     const newRating = await Rating.create({
-//       targetType,
-//       targetId,
-//       user: req.user.id,
-//       rating,
-//     });
-//     res.status(201).json({ success: true, data: newRating });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-
-// exports.addOrUpdateRating = async (req, res) => {
-//   const { jobId } = req.params;
-//   const { rating } = req.body;
-
-//   if (rating < 1 || rating > 5) {
-//     return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
-//   }
-
-//   try {
-//     const job = await Job.findById(jobId);
-
-//     if (!job) {
-//       return res.status(404).json({ success: false, message: "Job not found" });
-//     }
-
-//     const existingRating = job.ratings.find((r) => r.user.toString() === req.user.id);
-
-//     if (existingRating) {
-//       // Update the rating
-//       existingRating.rating = rating;
-//     } else {
-//       // Add a new rating
-//       job.ratings.push({ user: req.user.id, rating });
-//     }
-
-//     await job.save();
-
-//     // Calculate the average rating
-//     const avgRating =
-//       job.ratings.reduce((sum, r) => sum + r.rating, 0) / job.ratings.length;
-
-//     res.json({ success: true, averageRating: avgRating, ratings: job.ratings });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-
-exports.addOrUpdateRating = async (req, res) => {
-  const { targetType, targetId, rating } = req.body;
-
-  // Validate the inputs
-  if (!targetType || !targetId || !rating) {
+  if (!user || !targetId || !rating || !targetType) {
     return res
       .status(400)
-      .json({ success: false, message: "Missing required fields" });
-  }
-
-  // Validate rating is a number within a certain range (e.g., 1 to 5)
-  if (typeof rating !== "number" || rating < 1 || rating > 5) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Rating must be between 1 and 5" });
+      .json({ message: "userId and targetId are required." });
   }
 
   try {
-    // Check if rating already exists
     const existingRating = await Rating.findOne({
-      targetType,
+      user,
       targetId,
-      user: req.user.id,
+      rating,
+      targetType: "Company",
     });
 
     if (existingRating) {
-      // If rating exists, update it
       existingRating.rating = rating;
       await existingRating.save();
-      return res.status(200).json({ success: true, data: existingRating });
+    } else {
+      await Rating.create({ user, targetId, targetType: "Company", rating });
     }
 
-    // If no rating exists, create a new one
-    const newRating = await Rating.create({
-      targetType,
-      targetId,
-      user: req.user.id,
-      rating,
+    const ratings = await Rating.find({ targetId, targetType: "Company" });
+    const totalRatings = ratings.length;
+    const averageRating =
+      ratings.reduce((sum, r) => sum + r.rating, 0) / totalRatings;
+
+    await Company.findByIdAndUpdate(targetId, {
+      "ratingsSummary.averageRating": averageRating,
+      "ratingsSummary.totalRatings": totalRatings,
     });
 
-    res.status(201).json({ success: true, data: newRating });
+    res
+      .status(200)
+      .json({ success: true, message: "Rating updated successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Error updating rating:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+exports.Ratings = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating } = req.body;
+    const userId = req.user.id;
+
+    const job = await Job.findById(id);
+    if (!job) {
+      return res.status(404).json({ message: "Job not found." });
+    }
+
+    const existingRating = job.ratings.find(
+      (r) => r.user.toString() === userId
+    );
+    if (existingRating) {
+      existingRating.rating = rating;
+    } else {
+      job.ratings.push({ user: userId, rating });
+    }
+
+    await job.updateRatingsSummary();
+
+    res.status(200).json({ message: "Rating submitted successfully." });
+  } catch (err) {
+    console.error("Error submitting rating:", err.message);
+    res.status(500).json({ message: "Error submitting rating." });
+  }
+};
+
+// module.exports = router;
+
+// if (!userId || !targetId || !rating || !targetType) {
+//   return res
+//     .status(400)
+//     .json({ message: "userId and targetId are required." });
+// }
+
+// try {
+//   const newRating = new Rating({
+//     rating,
+//     userId,
+//     targetId,
+//     targetType,
+//   });
+//   await newRating.save();
+//   res.status(201).json({ message: "Rating submitted successfully!" });
+// } catch (error) {
+//   console.error("Error submitting rating:", error);
+//   res.status(500).json({ message: "Error submitting rating." });
+// }

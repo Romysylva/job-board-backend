@@ -252,7 +252,30 @@ const getuserPreferences = async (req, res) => {
   }
 };
 
+const getActivityStats = async (req, res) => {
+  try {
+    const jobCount = await Job.countDocuments();
+    const userCount = await User.countDocuments();
+    const applicationsCount = await Job.aggregate([
+      { $unwind: "$applicants" },
+      { $count: "totalApplications" },
+    ]);
+
+    const stats = {
+      jobs: jobCount,
+      users: userCount,
+      applications: applicationsCount[0]?.totalApplications || 0,
+    };
+
+    res.json(stats);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: "Server error, please try again later." });
+  }
+};
+
 module.exports = {
+  getActivityStats,
   registerUser,
   loginUser,
   getUserProfile,

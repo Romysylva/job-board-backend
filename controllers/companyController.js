@@ -32,7 +32,10 @@ exports.getCompanies = async (req, res) => {
 // @route   GET /api/companies/:id
 exports.getCompany = async (req, res) => {
   try {
-    const company = await Company.findById(req.params.id);
+    const company = await Company.findById(req.params.id).populate(
+      "jobs",
+      "title location salary"
+    );
     if (!company) {
       return res
         .status(404)

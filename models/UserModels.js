@@ -19,10 +19,16 @@ const UserSchema = new mongoose.Schema(
     },
     roles: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "staff"],
       default: "user",
     },
     profileImage: { type: String, default: "" },
+    applications: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Application",
+      },
+    ],
     preferences: {
       theme: { type: String, default: "light" }, // "light" or "dark"
       notifications: { type: Boolean, default: true },

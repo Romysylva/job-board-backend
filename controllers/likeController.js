@@ -168,3 +168,52 @@ exports.likeJob = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+// In routes/jobs.js
+// const express = require("express");
+// const router = express.Router();
+// const { likeJob, dislikeJob } = require("../controllers/jobController");
+
+// router.post("/:jobId/like", likeJob);
+// router.post("/:jobId/dislike", dislikeJob);
+
+// module.exports = router;
+
+// // In controllers/jobController.js
+// exports.likeJob = async (req, res) => {
+//   try {
+//     const { jobId } = req.params;
+//     const userId = req.user.id; // Assuming authentication middleware adds user info to req
+
+//     const job = await Job.findById(jobId);
+//     if (!job) return res.status(404).json({ message: "Job not found" });
+
+//     if (!job.likes.includes(userId)) {
+//       job.likes.push(userId);
+//       await job.save();
+//     }
+
+//     res.status(200).json({ likes: job.likes.length });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Error liking the job" });
+//   }
+// };
+
+// exports.dislikeJob = async (req, res) => {
+//   try {
+//     const { jobId } = req.params;
+//     const userId = req.user.id;
+
+//     const job = await Job.findById(jobId);
+//     if (!job) return res.status(404).json({ message: "Job not found" });
+
+//     job.likes = job.likes.filter((id) => id.toString() !== userId);
+//     await job.save();
+
+//     res.status(200).json({ likes: job.likes.length });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Error disliking the job" });
+//   }
+// };

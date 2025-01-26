@@ -9,12 +9,13 @@ const {
   addLike,
   getLikes,
   removeLike,
+  likeJob,
 } = require("../controllers/likeController"); // Import the controller methods
 
 // @route   POST /api/likes
 // @desc    Add a like for a comment or review
 // @access  Private
-router.post("/", protect, addLike);
+// router.post("/", protect, likeJob);
 
 // @route   GET /api/likes/:targetType/:targetId
 // @desc    Get all likes for a specific target (comment or review)

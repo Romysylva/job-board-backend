@@ -4,7 +4,7 @@ const applicationController = require("../controllers/applicationController");
 const { protect, adminOnly } = require("../middlewares/authMiddleware"); // Middleware to protect routes
 
 // Routes for applications
-router.post("/apply", protect, applicationController.createApplication);
+router.post("/apply", protect, applicationController.applyToJob);
 router.get("/job/:jobId", protect, applicationController.getApplicationsForJob);
 router.get("/user", protect, applicationController.getApplicationsForUser);
 router.put(

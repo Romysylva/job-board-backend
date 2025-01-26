@@ -1,5 +1,6 @@
-const User = require("../models/UserModels");
 const jwt = require("jsonwebtoken");
+const Company = require("../models/CompanyModels");
+const User = require("../models/UserModels");
 
 const protect = async (req, res, next) => {
   let token;
@@ -41,7 +42,28 @@ const adminOnly = (req, res, next) => {
   res.status(403).json({ message: "Not authorized as admin" });
 };
 
-module.exports = { protect, adminOnly };
+const authenticateCompany = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const company = await Company.findById(decoded.id);
+
+    if (!company) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    req.company = company; // Attach company data to the request
+    next();
+  } catch (error) {
+    console.error("Authentication error:", error);
+    res.status(401).json({ message: "Unauthorized" });
+  }
+};
+module.exports = { protect, adminOnly, authenticateCompany };
 
 // isAdmin = (req, res, next) => {
 //   if (req.user && req.user.roles.includes('admin')) {

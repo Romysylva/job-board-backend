@@ -1,9 +1,12 @@
 const express = require("express");
-const { addOrUpdateRating } = require("../controllers/ratingController");
+
+const { createRating, Ratings } = require("../controllers/ratingController");
+
 const { protect } = require("../middlewares/authMiddleware");
+
 const router = express.Router();
 
 // Rating routes
-router.post("/:jobId/rate", protect, addOrUpdateRating);
+router.post("/", protect, createRating);
 
 module.exports = router;

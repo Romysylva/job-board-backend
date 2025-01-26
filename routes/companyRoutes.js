@@ -6,6 +6,10 @@ const {
   getCompany,
 } = require("../controllers/companyController");
 const { protect } = require("../middlewares/authMiddleware");
+const {
+  registerCompany,
+  companyLogin,
+} = require("../controllers/authController");
 
 const router = express.Router();
 

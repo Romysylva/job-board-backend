@@ -12,6 +12,7 @@ const {
   getUserProfile,
   updatePreferences,
   getuserPreferences,
+  getActivityStats,
 } = require("../controllers/userController");
 const { protect, adminOnly } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
@@ -34,19 +35,7 @@ router.delete("/admin/:id", protect, adminOnly, deleteUserByAdmin);
 router.get("/", protect, adminOnly, getAllUsers);
 router.put("/preferences", protect, updatePreferences);
 router.get("/preferences", protect, getuserPreferences);
-// router.get("/preferences", protect, async (req, res) => {
-//   try {
-//     const userPreferences = {
-//       notifications: true,
-//       darkMode: false,
-//       emailUpdates: true,
-//     };
 
-//     res.status(200).json({ preferences: userPreferences }); // Ensure this matches the frontend's expectation
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Failed to fetch preferences" });
-//   }
-// });
+router.get("/api/admin/stats", protect, adminOnly, getActivityStats);
 
 module.exports = router;

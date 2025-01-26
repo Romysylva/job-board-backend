@@ -1,29 +1,70 @@
 const mongoose = require("mongoose");
 
-const applicationSchema = new mongoose.Schema(
+const ApplicationSchema = new mongoose.Schema(
   {
-    job: { type: mongoose.Schema.Types.ObjectId, ref: "Job", required: true },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    resume: { type: String, required: true }, // e.g., URL to resume file
-    coverLetter: { type: String },
+    job: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Job", // Reference to the Job schema
+      required: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // Reference to the User schema
+      required: true,
+    },
+    resumeLink: {
+      type: String,
+      required: true,
+    },
+    coverLetter: {
+      type: String,
+    },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
+      enum: ["Pending", "Reviewed", "Interview", "Accepted", "Rejected"],
+      default: "Pending",
+    },
+    feedback: {
+      type: String, // Optional feedback from recruiters
+    },
+    applicationDate: {
+      type: Date,
+      default: Date.now,
     },
   },
   { timestamps: true }
 );
 
-applicationSchema.pre("save", function (next) {
-  if (!["pending", "approved", "rejected"].includes(this.status)) {
+ApplicationSchema.pre("save", function (next) {
+  if (
+    !["pending", "Accepted", "Rejected", "Reviewed", "Interview"].includes(
+      this.status
+    )
+  ) {
     return next(new Error("Invalid status value"));
   }
   next();
 });
+// Populate job titles and user names when fetching an applicant
+ApplicationSchema.virtual("jobDetails", {
+  ref: "Job",
+  localField: "job",
+  foreignField: "_id",
+  justOne: true,
+});
+
+ApplicationSchema.virtual("userDetails", {
+  ref: "User",
+  localField: "user",
+  foreignField: "_id",
+  justOne: true,
+});
+
+ApplicationSchema.set("toJSON", { virtuals: true });
+ApplicationSchema.set("toObject", { virtuals: true });
 
 // Ensure a user can only apply to a job once
 
-applicationSchema.index({ job: 1, user: 1 }, { unique: true });
+ApplicationSchema.index({ job: 1, user: 1 }, { unique: true });
 
-module.exports = mongoose.model("Application", applicationSchema);
+module.exports = mongoose.model("Application", ApplicationSchema);

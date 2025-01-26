@@ -8,11 +8,7 @@ const RatingSchema = new mongoose.Schema(
       max: 5,
       required: true,
     },
-    comment: {
-      type: String,
-      required: true,
-    },
-    userId: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -28,7 +24,7 @@ const RatingSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamp: true }
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("Rating", RatingSchema);

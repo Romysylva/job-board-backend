@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Job = require("../models/JobModels");
 const Comment = require("../models/CommentModels");
 const Review = require("../models/ReviewModels");
+const Company = require("../models/CompanyModels");
 
 exports.createJob = async (req, res) => {
   const {
@@ -50,6 +51,8 @@ exports.createJob = async (req, res) => {
 };
 
 exports.getJobs = async (req, res) => {
+  // const companyId = req.user.companyId;
+  // const companyId = req.company?.id;
   try {
     const jobCount = await Job.countDocuments();
     const jobs = await Job.find().populate("company");
@@ -139,27 +142,6 @@ exports.addReview = async (req, res) => {
   }
 };
 
-// exports.JobDetails = async (req, res) => {
-//   try {
-//     const job = await Job.findById(req.params.id)
-//       .populate("postedBy", "name email")
-//       .populate("applicants.userId", "name email")
-//       .populate("comments.userId", "name email")
-//       .populate("reviews.userId", "name email")
-//       .populate("ratings.userId", "name email")
-//       .populate("likes.userId", "name email");
-
-//     if (!job) {
-//       return res.status(404).json({ message: "Job not found" });
-//     }
-
-//     res.json(job);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
-
 exports.JobDetails = async (req, res) => {
   // Validate ObjectId format
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -169,11 +151,15 @@ exports.JobDetails = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id)
       .populate("postedBy", "name email")
-      .populate("applicants", "name email")
-      .populate("comments.userId", "name email")
-      .populate("reviews.userId", "name email")
-      .populate("ratings", "name email")
-      .populate("likes.userId", "name email");
+      .populate({
+        path: "applicants",
+        populate: { path: "user", select: "username profileImage" },
+      })
+      .populate("company", "name logo")
+      .populate("comments", "commentText")
+      .populate("reviews.userId", "reviewText username rating")
+      .populate("ratingsSummary", "username email")
+      .populate("likes", "name email");
 
     if (!job) {
       return res.status(404).json({ message: "Job not found" });
@@ -183,5 +169,88 @@ exports.JobDetails = async (req, res) => {
   } catch (error) {
     console.error("Error fetching job details:", error.message || error);
     res.status(500).json({ message: "Server error, please try again later." });
+  }
+};
+
+exports.likeJob = async (req, res) => {
+  const { jobId } = req.params;
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required." });
+  }
+
+  try {
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({ message: "Job not found." });
+    }
+
+    // Add the user to the likes array if not already liked
+    if (!job.likes.some((like) => like.user.toString() === userId)) {
+      job.likes.push({ user: userId });
+      await job.save();
+    }
+
+    res.json({ likes: job.likes.length });
+  } catch (err) {
+    console.error("Error in likeJob controller:", err);
+    res
+      .status(500)
+      .json({ message: "Error liking the job.", error: err.message });
+  }
+};
+
+exports.CompanyCreateJob = async (req, res) => {
+  try {
+    const { title, description, salary, location, jobType } = req.body;
+
+    // Ensure the company is authenticated and authorized
+    const companyId = req.company?.id; // Assuming company data is attached by authentication middleware
+    if (!companyId) {
+      return res.status(403).json({ message: "Unauthorized access" });
+    }
+
+    // Validate request data
+    if (!title || !description || !salary || !location || !jobType) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Check if the company exists
+    const company = await Company.findById(companyId);
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    // Create the new job
+    const newJob = new Job({
+      title,
+      description,
+      salary,
+      location,
+      jobType,
+      company: companyId, // Link the job to the authenticated company
+    });
+
+    // Save the job to the database
+    const savedJob = await newJob.save();
+
+    // Add the job to the company's job list
+    company.jobs.push(savedJob._id);
+    await company.save();
+
+    const populatedJobs = await Job.findById(savedJob._id).populate(
+      "company",
+      "name",
+      "description"
+    );
+
+    return res.status(201).json({
+      message: "Job created successfully",
+      job: populatedJobs,
+    });
+  } catch (error) {
+    console.error("Error creating job:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
