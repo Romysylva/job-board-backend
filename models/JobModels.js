@@ -10,14 +10,9 @@ const JobSchema = new mongoose.Schema(
     experience: { type: String },
     skills: [String],
     contactEmail: { type: String },
-    postedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      // required: true,
-    },
     jobType: {
       type: String,
-      enum: ["Full-time", "part-time", "Contract", "Internship"],
+      enum: ["Full-time", "Part-time", "Contract", "Internship"],
       required: true,
     },
 

@@ -5,8 +5,9 @@ const CompanySchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true },
     password: { type: String, required: true },
-    description: { type: String },
-    location: { type: String },
+    shortDescription: { type: String },
+    location: { type: String, required: true },
+    about: { type: String, required: true },
 
     jobs: [
       {
@@ -17,7 +18,8 @@ const CompanySchema = new mongoose.Schema(
     logo: {
       type: String,
       required: true,
-      default: "/images/default-company-logo.png",
+      default:
+        "https://media.istockphoto.com/id/2183945464/photo/cross-shape-or-letter-x.jpg?s=2048x2048&w=is&k=20&c=upUf4e1bwT1xNSK7p1nKsppVSWtkCRJ6pHhaoFQb82w=",
     },
 
     ratings: [

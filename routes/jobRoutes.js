@@ -12,6 +12,7 @@ const {
   JobDetails,
   likeJob,
   CompanyCreateJob,
+  getApplicants,
 } = require("../controllers/jobController");
 
 const { Ratings } = require("../controllers/ratingController");
@@ -35,9 +36,11 @@ router.delete("/:id", protect, adminOnly, deleteJob);
 // router.post("/:jobId/like", protect, likeJob);
 router.post("/:jobId/comment", protect, addComment);
 router.post("/:jobId/review", protect, addReview);
-router.get("/:id", protect, JobDetails);
 router.post("/:id/rate", protect, Ratings);
 router.post("/:jobId/likes", likeJob);
+router.get("/:id", protect, JobDetails);
+router.get("/:jobId/applicants", getApplicants);
+// router.get("/:companyId", getCompanyDetails);
 
 router.post("/api/jobs/:jobId/dislike", async (req, res) => {
   const { userId } = req.body; // Get user ID from request body

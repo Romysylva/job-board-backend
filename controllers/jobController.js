@@ -4,51 +4,51 @@ const Comment = require("../models/CommentModels");
 const Review = require("../models/ReviewModels");
 const Company = require("../models/CompanyModels");
 
-exports.createJob = async (req, res) => {
-  const {
-    title,
-    company,
-    description,
-    location,
-    jobType,
-    requirements,
-    postedBy,
-    salary,
-    experience,
-    skills,
-    contactEmail,
-    comments,
-    reviews,
-    ratings,
-    likes,
-    applicants,
-  } = req.body;
+// exports.createJob = async (req, res) => {
+//   const {
+//     title,
+//     company,
+//     description,
+//     location,
+//     jobType,
+//     requirements,
+//     postedBy,
+//     salary,
+//     experience,
+//     skills,
+//     contactEmail,
+//     comments,
+//     reviews,
+//     ratings,
+//     likes,
+//     applicants,
+//   } = req.body;
 
-  try {
-    const job = await Job.create({
-      title,
-      company,
-      description,
-      location,
-      jobType,
-      postedBy,
-      requirements,
-      salary,
-      experience,
-      skills,
-      contactEmail,
-      comments,
-      reviews,
-      ratings,
-      likes,
-      applicants,
-    });
+//   try {
+//     const job = await Job.create({
+//       title,
+//       company,
+//       description,
+//       location,
+//       jobType,
+//       postedBy,
+//       requirements,
+//       salary,
+//       experience,
+//       skills,
+//       contactEmail,
+//       comments,
+//       reviews,
+//       ratings,
+//       likes,
+//       applicants,
+//     });
 
-    res.status(201).json({ success: true, data: job });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
-  }
-};
+//     res.status(201).json({ success: true, data: job });
+//   } catch (err) {
+//     res.status(400).json({ success: false, message: err.message });
+//   }
+// };
 
 exports.getJobs = async (req, res) => {
   // const companyId = req.user.companyId;
@@ -150,7 +150,6 @@ exports.JobDetails = async (req, res) => {
 
   try {
     const job = await Job.findById(req.params.id)
-      .populate("postedBy", "name email")
       .populate({
         path: "applicants",
         populate: { path: "user", select: "username profileImage" },
@@ -203,48 +202,67 @@ exports.likeJob = async (req, res) => {
 
 exports.CompanyCreateJob = async (req, res) => {
   try {
-    const { title, description, salary, location, jobType } = req.body;
+    const {
+      title,
+      description,
+      location,
+      jobType,
+      requirements,
+      postedBy,
+      salary,
+      experience,
+      skills,
+      contactEmail,
+      comments,
+      reviews,
+      ratings,
+      likes,
+      applicants,
+    } = req.body;
 
-    // Ensure the company is authenticated and authorized
-    const companyId = req.company?.id; // Assuming company data is attached by authentication middleware
+    const companyId = req.company?.id;
     if (!companyId) {
       return res.status(403).json({ message: "Unauthorized access" });
     }
 
-    // Validate request data
-    if (!title || !description || !salary || !location || !jobType) {
+    if (!title || !salary || !location || !jobType) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Check if the company exists
     const company = await Company.findById(companyId);
     if (!company) {
       return res.status(404).json({ message: "Company not found" });
     }
 
-    // Create the new job
     const newJob = new Job({
       title,
       description,
-      salary,
       location,
       jobType,
-      company: companyId, // Link the job to the authenticated company
+      postedBy,
+      requirements,
+      salary,
+      experience,
+      skills,
+      contactEmail,
+      comments,
+      reviews,
+      ratings,
+      likes,
+      applicants,
+      company: companyId,
     });
 
-    // Save the job to the database
     const savedJob = await newJob.save();
+    console.log(savedJob);
 
-    // Add the job to the company's job list
     company.jobs.push(savedJob._id);
     await company.save();
 
     const populatedJobs = await Job.findById(savedJob._id).populate(
       "company",
-      "name",
-      "description"
+      "name"
     );
-
     return res.status(201).json({
       message: "Job created successfully",
       job: populatedJobs,
@@ -252,5 +270,63 @@ exports.CompanyCreateJob = async (req, res) => {
   } catch (error) {
     console.error("Error creating job:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// GET /api/jobs/:jobId/applicants
+// exports.getApplicants = async (req, res) => {
+//   const { jobId } = req.params;
+//   try {
+//     const job = await Job.findById({ jobId }).populate(
+//       "applicants.user",
+//       "name profileImage"
+//     );
+//     if (!job) {
+//       return res.status(404).json({ message: "Job not found" });
+//     }
+//     res.status(200).json({ success: true, applicants });
+//   } catch (err) {
+//     res
+//       .status(500)
+//       .json({ message: "Error fetching applicants", error: err.message });
+//   }
+// };
+
+exports.getApplicants = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+
+    // Validate jobId format
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      return res.status(400).json({ message: "Invalid Job ID format" });
+    }
+
+    // Find the job and populate applicants
+    const job = await Job.findById(jobId).populate("applicants");
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    if (!job.applicants || job.applicants.length === 0) {
+      return res.json({ message: "No applicants found for this job." });
+    }
+
+    res.json({ applicants: job.applicants });
+  } catch (error) {
+    console.error("Error fetching applicants:", error); // Log the error
+    res.status(500).json({ message: "Server error, please try again later." });
+  }
+};
+
+exports.getCompanyDetails = async (req, res) => {
+  try {
+    const company = await Company.findById(req.params.companyId);
+    const jobs = await Job.find({ company: req.params.companyId });
+    res.status(200).json({ company, jobs });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Error fetching company details", error: err.message });
   }
 };

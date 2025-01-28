@@ -527,3 +527,28 @@ router.get("/:jobId/ratings", async (req, res) => {
 });
 
 module.exports = router;
+
+
+
+
+const Applicant = require("../models/Applicant");
+
+const getApplicantDetails = async (req, res) => {
+  try {
+    const applicantId = req.params.id;
+
+    // Populate job title and user name
+    const applicant = await Applicant.findById(applicantId)
+      .populate("job", "title") // Get only the job title
+      .populate("user", "name"); // Get only the user name
+
+    if (!applicant) {
+      return res.status(404).json({ message: "Applicant not found" });
+    }
+
+    res.status(200).json(applicant);
+  } catch (error) {
+    console.error("Error fetching applicant details:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

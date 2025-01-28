@@ -94,10 +94,12 @@ exports.logoutUser = (req, res) => {
 // Company Registration Handler
 exports.registerCompany = async (req, res) => {
   try {
-    const { name, email, password, description, location } = req.body;
+    const { name, email, password, shortDescription, location, about } =
+      req.body;
 
-    // Validate request body
-    if (![name || email || password || description || location]) {
+    const logo = req.file ? req.file.path : null;
+
+    if (![name || email || password || shortDescription || location || about]) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -112,20 +114,27 @@ exports.registerCompany = async (req, res) => {
     const newCompany = await Company.create({
       name,
       email,
+      about,
       password: hashedPassword,
-      description,
+      shortDescription,
       location,
+      logo,
     });
 
+    const companyObject = { ...newCompany.toObject() };
+    delete companyObject.password;
+
     return res.status(201).json({
+      success: true,
       message: "Company registered successfully",
-      company: {
-        id: newCompany._id,
-        name: newCompany.name,
-        email: newCompany.email,
-        description: newCompany.description,
-        location: newCompany.location,
-      },
+      // company: {
+      //   id: newCompany._id,
+      //   name: newCompany.name,
+      //   email: newCompany.email,
+      //   shortDescription: newCompany.shortDescription,
+      //   location: newCompany.location,
+      // },
+      company: companyObject,
     });
   } catch (error) {
     console.error("Error during company registration:", error);
@@ -137,33 +146,29 @@ exports.companyLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if email and password are provided
     if (![email || password]) {
       return res
         .status(400)
         .json({ message: "Email and password are required" });
     }
 
-    // Find the company by email
     const company = await Company.findOne({ email });
     if (!company) {
       return res.status(404).json({ message: "Company not found" });
     }
 
-    // Compare provided password with hashed password in DB
     const isPasswordValid = await bcrypt.compare(password, company.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Generate a JWT token
     const token = jwt.sign({ id: company._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d", // Token is valid for 1 day
+      expiresIn: "1d",
     });
 
     return res.status(200).json({
       message: "Login successful",
-      token, // Return the token
+      token,
       company: {
         id: company._id,
         name: company.name,

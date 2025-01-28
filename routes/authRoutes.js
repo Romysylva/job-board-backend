@@ -17,7 +17,7 @@ router.post("/login", loginUser);
 // router.get("/logout", logoutUser);
 
 // Company Registration Route
-router.post("/company/register", registerCompany);
+router.post("/company/register", upload.single("logo"), registerCompany);
 
 // Company Login Route
 router.post("/company/login", companyLogin);
