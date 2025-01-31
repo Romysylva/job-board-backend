@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const ApplicationSchema = new mongoose.Schema(
   {
+    fullName: {
+      type: String,
+      required: true,
+    },
     job: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Job", // Reference to the Job schema
@@ -37,7 +41,7 @@ const ApplicationSchema = new mongoose.Schema(
 
 ApplicationSchema.pre("save", function (next) {
   if (
-    !["pending", "Accepted", "Rejected", "Reviewed", "Interview"].includes(
+    !["Pending", "Accepted", "Rejected", "Reviewed", "Interview"].includes(
       this.status
     )
   ) {

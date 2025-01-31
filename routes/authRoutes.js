@@ -5,8 +5,10 @@ const {
   logoutUser,
   registerCompany,
   companyLogin,
+  getMe,
 } = require("../controllers/authController");
 const { upload } = require("../middlewares/uploadMiddleware");
+const { protect } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -21,5 +23,6 @@ router.post("/company/register", upload.single("logo"), registerCompany);
 
 // Company Login Route
 router.post("/company/login", companyLogin);
+router.get("/me", protect, getMe);
 
 module.exports = router;

@@ -63,7 +63,20 @@ const authenticateCompany = async (req, res, next) => {
     res.status(401).json({ message: "Unauthorized" });
   }
 };
-module.exports = { protect, adminOnly, authenticateCompany };
+
+const authorizeRoles = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Access Denied: Insufficient Permissions",
+      });
+    }
+    next();
+  };
+};
+
+module.exports = { protect, adminOnly, authenticateCompany, authorizeRoles };
 
 // isAdmin = (req, res, next) => {
 //   if (req.user && req.user.roles.includes('admin')) {

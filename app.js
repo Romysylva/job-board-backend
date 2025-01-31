@@ -1,3 +1,5 @@
+const path = require("path");
+
 const events = require("events");
 events.EventEmitter.defaultMaxListeners = 20;
 
@@ -6,6 +8,8 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const cors = require("cors");
+const compression = require("compression");
+const helmet = require("helmet");
 
 // dotenv.config();
 
@@ -15,14 +19,49 @@ const app = express();
 
 app.use(express.json());
 
+// app.use(
+//   cors({
+// origin: "http://localhost:3000",
+//   })
+// );
+
 app.use(
   cors({
     origin: "http://localhost:3000",
+
+    // origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+app.use(
+  "/uploads",
+  express.static("uploads", {
+    setHeaders: (res) => {
+      res.set("Access-Control-Allow-Origin", "*");
+      res.set("Cross-Origin-Resource-Policy", "cross-origin");
+    },
+  })
+);
+
 app.use(cookieParser());
 
-app.use("/uploads", express.static("uploads"));
+app.use(compression());
+app.use(helmet());
+
+// app.use("/uploads", express.static("uploads"));
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "client/build")));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+  });
+}
+
+// const normalizedLogoPath = company?.log ? company.logo.replace(/\\/g, "/") : "";
+// res.json({ logo: normalizedLogoPath });
 
 const authRoutes = require("./routes/authRoutes");
 const jobRoutes = require("./routes/jobRoutes");

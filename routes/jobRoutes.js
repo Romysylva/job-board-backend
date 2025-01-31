@@ -22,17 +22,23 @@ const {
   protect,
   adminOnly,
   authenticateCompany,
+  authorizeRoles,
 } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
 // Job routes
 // router.post("/", protect, adminOnly, createJob);
-router.post("/", authenticateCompany, CompanyCreateJob);
+router.post(
+  "/",
+  authorizeRoles("admin", "manager"),
+  authenticateCompany,
+  CompanyCreateJob
+);
 router.get("/", protect, getJobs);
 // router.get("/:id", protect, getJob);
-router.put("/:id", protect, adminOnly, updateJob);
-router.delete("/:id", protect, adminOnly, deleteJob);
+router.put("/:id", protect, authorizeRoles("admin", "manager"), updateJob);
+router.delete("/:id", protect, authorizeRoles("admin", "manager"), deleteJob);
 // router.post("/:jobId/like", protect, likeJob);
 router.post("/:jobId/comment", protect, addComment);
 router.post("/:jobId/review", protect, addReview);

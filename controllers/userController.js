@@ -55,7 +55,9 @@ const getAllUsers = async (req, res) => {
     const users = await User.find({}).select("-password"); // Exclude passwords
     res.json({ success: true, totalUsers: userCount, data: users });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res
+      .status(500)
+      .json({ success: true, message: "Server error", error: error.message });
   }
 };
 

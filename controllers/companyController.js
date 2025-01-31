@@ -26,6 +26,10 @@ exports.getCompanies = async (req, res) => {
   }
 };
 
+// let company = Company.findOne(params.company._id);
+// const normalizedLogoPath = company.logo.replace(/\\/g, "/");
+// res.json({ logo: normalizedLogoPath });
+
 exports.getCompany = async (req, res) => {
   const companyId = req.company?.id || req.params.id;
   // req.params.id
@@ -72,5 +76,16 @@ exports.getCompanyDetails = async (req, res) => {
   } catch (error) {
     console.error("Error fetching company details:", error.message);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getCompanyJobs = async (req, res) => {
+  try {
+    const jobs = await Job.find({ company: req.params.id }).select(
+      "title location salary"
+    );
+    res.status(200).json({ success: true, data: jobs });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

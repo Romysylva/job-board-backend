@@ -173,8 +173,8 @@ exports.deleteApplication = async (req, res) => {
 
 exports.applyToJob = async (req, res) => {
   try {
-    const { jobId } = req.params;
-    const { resumeLink, coverLetter } = req.body;
+    // const { jobId } = req.params;
+    const { resumeLink, coverLetter, fullName, jobId } = req.body;
     const userId = req.user.id; // Assumes authentication middleware sets req.user
 
     const job = await Job.findById(jobId);
@@ -195,7 +195,9 @@ exports.applyToJob = async (req, res) => {
 
     // Create a new application
     const application = new Application({
+      fullName,
       job: jobId,
+      // jobId,
       user: userId,
       resumeLink,
       coverLetter,
